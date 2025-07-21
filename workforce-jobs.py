@@ -3,6 +3,7 @@
 import os
 import requests
 import updatabot
+import hashlib
 
 
 # %%
@@ -65,8 +66,10 @@ print(df3)
 
 # %%
 
-# Save the data
+# Save the data to disk, work out the MD5
 df3.to_csv('workforce-jobs.csv', index=False)
+etag = hashlib.md5(open('workforce-jobs.csv', 'rb').read()).hexdigest()
+
 
 # %%
 
@@ -76,6 +79,21 @@ if not API_KEY:
 TARGET_SERVER = 'https://data.london.gov.uk'
 TARGET_DATASET = 'c6c1e622-1f1c-406b-9456-b8d57ea507a7'
 TARGET_FILE = '73bcf44b-162f-4941-88ab-4418a19807d1'
+
+# Ask DataPress if the file has changed...
+dataset_response = requests.get(f"{TARGET_SERVER}/api/dataset/{TARGET_DATASET}", headers={
+    'Authorization': API_KEY})
+dataset_json = dataset_response.json()
+existing_md5 = dataset_json['resources'][TARGET_FILE]['check_hash']
+
+if existing_md5 == etag:
+    print('No changes to upload. Finishing here.')
+    exit(0)
+
+print('File has changed. Uploading new version...')
+
+
+# %%
 
 url = f"{TARGET_SERVER}/api/dataset/{TARGET_DATASET}/resources/{TARGET_FILE}"
 
