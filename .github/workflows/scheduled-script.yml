@@ -1,0 +1,30 @@
+name: Scheduled Python Script
+
+on:
+  schedule:
+    # Run every day at 17:00 UTC
+    - cron: '0 17 * * *'
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r REQUIREMENTS.txt
+    
+    - name: Run script
+      env:
+        DATAPRESS_API_KEY: ${{ secrets.DATAPRESS_API_KEY }}
+      run: python3 workforce-jobs.py
